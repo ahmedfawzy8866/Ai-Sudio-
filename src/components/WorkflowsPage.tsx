@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Workflow } from '../types';
@@ -6,6 +6,7 @@ import { Workflow } from '../types';
 interface WorkflowsPageProps {
   T: (key: string) => string;
   isAr?: boolean;
+  searchQuery?: string;
 }
 
 const WORKFLOW_FALLBACKS: Record<string, { nameAr: string; descEn: string; descAr: string }> = {
@@ -51,7 +52,7 @@ const WORKFLOW_FALLBACKS: Record<string, { nameAr: string; descEn: string; descA
   }
 };
 
-export default function WorkflowsPage({ T, isAr }: WorkflowsPageProps) {
+export default function WorkflowsPage({ T, isAr, searchQuery = '' }: WorkflowsPageProps) {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [runningAll, setRunningAll] = useState(false);
 
@@ -83,6 +84,23 @@ export default function WorkflowsPage({ T, isAr }: WorkflowsPageProps) {
 
     return () => unsub();
   }, []);
+
+  const filteredWorkflows = useMemo(() => {
+    if (!searchQuery) return workflows;
+    const qLower = searchQuery.toLowerCase();
+    return workflows.filter((w) => {
+      const statusKey = w.status === 'active' ? 'online' : w.status === 'paused' ? 'idle' : 'config';
+      const statusTranslated = T(statusKey);
+      return (
+        w.name.toLowerCase().includes(qLower) ||
+        (w.nameAr && w.nameAr.toLowerCase().includes(qLower)) ||
+        w.desc.toLowerCase().includes(qLower) ||
+        (w.descAr && w.descAr.toLowerCase().includes(qLower)) ||
+        statusTranslated.toLowerCase().includes(qLower) ||
+        w.status.toLowerCase().includes(qLower)
+      );
+    });
+  }, [workflows, searchQuery, T]);
 
   const toggleWorkflow = async (wf: Workflow) => {
     const ref = doc(db, 'workflows', wf.id);
@@ -172,7 +190,7 @@ export default function WorkflowsPage({ T, isAr }: WorkflowsPageProps) {
             </span>
           </div>
           <div className="p-4 space-y-2 max-h-[460px] overflow-y-auto">
-            {workflows.map((w) => (
+            {filteredWorkflows.map((w) => (
               <div
                 key={w.id}
                 className="flex flex-col gap-2 px-4 py-3 bg-slate-900/40 border border-slate-800 rounded hover:border-slate-700 hover:bg-white/5 transition group"

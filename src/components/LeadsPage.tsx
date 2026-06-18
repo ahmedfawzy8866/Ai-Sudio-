@@ -7,10 +7,28 @@ import { motion, AnimatePresence } from 'motion/react';
 interface LeadsPageProps {
   T: (key: string) => string;
   isAr?: boolean;
+  searchQuery?: string;
 }
 
-export default function LeadsPage({ T, isAr = false }: LeadsPageProps) {
+const getStageTranslationKey = (stage: string) => {
+  switch (stage) {
+    case 'Initial Contact': return 'initialContact';
+    case 'Viewing Scheduled': return 'viewingScheduled';
+    case 'AI Matched': return 'aiMatched';
+    case 'Contract Draft': return 'contractDraft';
+    case 'Negotiating': return 'negotiating';
+    default: return stage.toLowerCase().replace(/\s+/g, '');
+  }
+};
+
+export default function LeadsPage({ T, isAr = false, searchQuery = '' }: LeadsPageProps) {
   const [q, setQ] = useState('');
+
+  useEffect(() => {
+    if (searchQuery !== undefined) {
+      setQ(searchQuery);
+    }
+  }, [searchQuery]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStage, setSelectedStage] = useState<string>('All');
@@ -154,12 +172,17 @@ export default function LeadsPage({ T, isAr = false }: LeadsPageProps) {
       const matchesArchive = showArchived ? !!l.archived : !l.archived;
 
       // search query matches: client name, phone number, interest, or interest status (stage)
+      const qLower = q.toLowerCase();
+      const stageKey = getStageTranslationKey(l.stage);
+      const stageTranslated = T(stageKey);
+
       const matchesQ =
         !q ||
-        l.name.toLowerCase().includes(q.toLowerCase()) ||
-        l.interest.toLowerCase().includes(q.toLowerCase()) ||
+        l.name.toLowerCase().includes(qLower) ||
+        l.interest.toLowerCase().includes(qLower) ||
         l.phone.includes(q) ||
-        l.stage.toLowerCase().includes(q.toLowerCase());
+        l.stage.toLowerCase().includes(qLower) ||
+        stageTranslated.toLowerCase().includes(qLower);
 
       // interest status (stage) filter
       const matchesStage = selectedStage === 'All' || l.stage === selectedStage;

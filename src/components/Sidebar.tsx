@@ -134,6 +134,24 @@ export default function Sidebar({
           </button>
         )}
 
+        {/* Language Toggle Button */}
+        <button
+          onClick={() => setLangKey((prev) => (prev === 'ar' ? 'en' : 'ar'))}
+          className="flex items-center gap-2.5 w-full px-3 py-2 text-slate-400 hover:text-cyan-400 hover:bg-white/5 rounded text-left transition select-none"
+          title={langKey === 'ar' ? 'Switch to English' : 'التحويل إلى العربية'}
+          id="btn-language-toggle"
+        >
+          <span className="text-sm shrink-0">🌐</span>
+          {!collapsed && (
+            <span className="text-[11px] font-mono uppercase tracking-wider flex items-center justify-between w-full">
+              <span>{langKey === 'ar' ? 'اللغة الحالية' : 'Language'}</span>
+              <span className="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-1.5 py-0.5 rounded font-bold uppercase">
+                {langKey === 'ar' ? 'العربية' : 'English'}
+              </span>
+            </span>
+          )}
+        </button>
+
         {/* Collapse Toggle */}
         <button
           onClick={() => setCollapsed((v) => !v)}

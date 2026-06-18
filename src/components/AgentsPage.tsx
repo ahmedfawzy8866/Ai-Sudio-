@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { collection, onSnapshot, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Agent, ChatMessage } from '../types';
 
 interface AgentsPageProps {
   T: (key: string) => string;
+  searchQuery?: string;
 }
 
-export default function AgentsPage({ T }: AgentsPageProps) {
+export default function AgentsPage({ T, searchQuery = '' }: AgentsPageProps) {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
@@ -61,6 +62,21 @@ export default function AgentsPage({ T }: AgentsPageProps) {
       unsubChats();
     };
   }, []);
+
+  const filteredAgents = useMemo(() => {
+    if (!searchQuery) return agents;
+    const qLower = searchQuery.toLowerCase();
+    return agents.filter((a) => {
+      const statusKey = a.status.toLowerCase();
+      const statusTranslated = T(statusKey);
+      return (
+        a.name.toLowerCase().includes(qLower) ||
+        (a.desc && a.desc.toLowerCase().includes(qLower)) ||
+        a.status.toLowerCase().includes(qLower) ||
+        statusTranslated.toLowerCase().includes(qLower)
+      );
+    });
+  }, [agents, searchQuery, T]);
 
   const handleRestart = async (agent: Agent) => {
     try {
@@ -124,7 +140,7 @@ export default function AgentsPage({ T }: AgentsPageProps) {
     <div className="space-y-6 animate-fade-in-up">
       {/* Agent Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {agents.map((a) => {
+        {filteredAgents.map((a) => {
           const isActive = activeId === a.id;
           return (
             <div

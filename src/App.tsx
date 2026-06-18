@@ -206,6 +206,7 @@ export default function App() {
   const [langKey, setLangKey] = useState<string>(() => localStorage.getItem('sierra_admin_lang') || 'en');
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Translate handler callback
   const T = useCallback((key: string) => TRANSLATIONS[langKey]?.[key] || key, [langKey]);
@@ -225,6 +226,7 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('sierra_admin_tab', tab);
+    setSearchQuery(''); // Reset search input on navigation change
   }, [tab]);
 
   // Auth changes listener
@@ -276,17 +278,17 @@ export default function App() {
       case 'overview':
         return <OverviewPage T={T} />;
       case 'agents':
-        return <AgentsPage T={T} />;
+        return <AgentsPage T={T} searchQuery={searchQuery} />;
       case 'workflows':
-        return <WorkflowsPage T={T} isAr={isAr} />;
+        return <WorkflowsPage T={T} isAr={isAr} searchQuery={searchQuery} />;
       case 'openclaw':
         return <OpenClawPage />;
       case 'nexus':
         return <NexusAIPage />;
       case 'leads':
-        return <LeadsPage T={T} isAr={isAr} />;
+        return <LeadsPage T={T} isAr={isAr} searchQuery={searchQuery} />;
       case 'listings':
-        return <ListingsHubPage T={T} />;
+        return <ListingsHubPage T={T} searchQuery={searchQuery} />;
       case 'curator':
         return <CuratorPage T={T} />;
       case 'scribe':
@@ -392,9 +394,34 @@ export default function App() {
           >
             ☰
           </button>
-          <h1 className="text-sm font-serif md:text-[#F0EDE5] font-semibold tracking-wide">
+          <h1 className="text-sm font-serif md:text-[#F0EDE5] font-semibold tracking-wide shrink-0">
             {activeTitle}
           </h1>
+
+          {/* Real-time Global Search Input */}
+          <div className="hidden sm:flex items-center relative max-w-xs w-full ml-1" id="global-header-search-container">
+            <span className="absolute left-3 text-slate-500 pointer-events-none text-xs select-none">
+              🔍
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={isAr ? "البحث بالترجمة الفورية..." : "Real-time multilingual search..."}
+              className="w-full bg-[#05080f]/90 border border-slate-800 rounded px-3.5 py-1.5 text-xs text-slate-200 placeholder-slate-600 outline-none focus:border-cyan-500/50 transition-all font-mono pl-8 pr-7"
+              id="global-header-search-input"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 text-slate-500 hover:text-white transition duration-100 text-[10px] w-4 h-4 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10"
+                title="Clear Search"
+                id="btn-global-search-clear"
+              >
+                ✕
+              </button>
+            )}
+          </div>
 
           <div className="ml-auto inline-flex items-center gap-3">
             {/* Lang toggler */}

@@ -5,6 +5,7 @@ import { Listing } from '../types';
 
 interface ListingsHubPageProps {
   T: (key: string) => string;
+  searchQuery?: string;
 }
 
 const HUB_IMGS = [
@@ -15,8 +16,14 @@ const HUB_IMGS = [
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=120&q=70',
 ];
 
-export default function ListingsHubPage({ T }: ListingsHubPageProps) {
+export default function ListingsHubPage({ T, searchQuery = '' }: ListingsHubPageProps) {
   const [q, setQ] = useState('');
+
+  useEffect(() => {
+    if (searchQuery !== undefined) {
+      setQ(searchQuery);
+    }
+  }, [searchQuery]);
   const [cmpF, setCmpF] = useState('All');
   const [statusF, setStatusF] = useState('All');
   const [sortCol, setSortCol] = useState<'code' | 'beds' | 'area' | 'ai' | 'price'>('ai');
@@ -66,11 +73,16 @@ export default function ListingsHubPage({ T }: ListingsHubPageProps) {
   const filtered = useMemo(() => {
     let r = [...listings];
     if (q) {
+      const qLower = q.toLowerCase();
       r = r.filter(
         (l) =>
           l.code.toUpperCase().includes(q.toUpperCase()) ||
-          l.cmp.toLowerCase().includes(q.toLowerCase()) ||
-          l.type.toLowerCase().includes(q.toLowerCase())
+          l.cmp.toLowerCase().includes(qLower) ||
+          l.type.toLowerCase().includes(qLower) ||
+          // Leveraging T() translation to match multilingual queries (e.g. Arabic words for status / type / compound)
+          T(l.type.toLowerCase()).toLowerCase().includes(qLower) ||
+          T(l.status.toLowerCase()).toLowerCase().includes(qLower) ||
+          T(l.cmp.toLowerCase()).toLowerCase().includes(qLower)
       );
     }
     if (cmpF !== 'All') {
